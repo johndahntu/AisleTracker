@@ -290,7 +290,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            margin-bottom: 20px;
+            margin-top: 20px;
         }
 
         .stat-card {
@@ -436,29 +436,6 @@
             <p>Task & Issue Management System</p>
         </header>
 
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-number" id="total-tasks">0</div>
-                <div class="stat-label">Total Active Tasks</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="new-items-count">0</div>
-                <div class="stat-label">New Items</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="missing-price-count">0</div>
-                <div class="stat-label">Missing Price Tags</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="audits-count">0</div>
-                <div class="stat-label">Audits</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="subscriptions-count">0</div>
-                <div class="stat-label">Subscriptions</div>
-            </div>
-        </div>
-
         <div class="main-content">
             <div class="card">
                 <h2>📝 Report New Task</h2>
@@ -553,6 +530,29 @@
                         <p>No tasks found. Submit a new report to get started!</p>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-tasks">0</div>
+                <div class="stat-label">Total Active Tasks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="new-items-count">0</div>
+                <div class="stat-label">New Items</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="missing-price-count">0</div>
+                <div class="stat-label">Missing Price Tags</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="audits-count">0</div>
+                <div class="stat-label">Audits</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="subscriptions-count">0</div>
+                <div class="stat-label">Subscriptions</div>
             </div>
         </div>
     </div>
@@ -715,6 +715,7 @@
                 const daysRemaining = getDaysRemaining(task.createdAt);
                 const isWarning = daysRemaining <= 3;
                 const just4uBadge = task.just4u ? '<span class="just4u-badge">J4U</span>' : '';
+                const just4uText = task.just4u ? '<br><strong>Just 4 U Issue:</strong> Yes' : '';
                 const imageHTML = task.imageUrl ? `<div class="image-preview"><img src="${task.imageUrl}" alt="Task image" class="task-image" onclick="window.open('${task.imageUrl}', '_blank')"></div>` : '';
                 
                 return `
@@ -725,7 +726,7 @@
                         </div>
                         <div class="task-details">
                             <strong>Aisle:</strong> ${task.aisle} | <strong>Section:</strong> ${task.section}<br>
-                            <strong>Description:</strong> ${task.description}<br>
+                            <strong>Description:</strong> ${task.description}${just4uText}<br>
                             <strong>Reported by:</strong> ${task.reporterName}
                         </div>
                         ${imageHTML}
