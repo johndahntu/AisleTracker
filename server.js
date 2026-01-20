@@ -2,15 +2,49 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
+const UPLOAD_DIR = path.join(__dirname, 'uploads');
+
+// Create uploads directory if it doesn't exist
+if (!fs.existsSync(UPLOAD_DIR)) {
+    fs.mkdirSync(UPLOAD_DIR);
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, UPLOAD_DIR);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: function (req, file, cb) {
+        const filetypes = /jpeg|jpg|png|gif|webp/;
+        const mimetype = filetypes.test(file.mimetype);
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+        
+        if (mimetype && extname) {
+            return cb(null, true);
+        }
+        cb(new Error('Only image files are allowed!'));
+    }
+});
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
+app.use('/uploads', express.static(UPLOAD_DIR));
 
 // Initialize data file if it doesn't exist
 if (!fs.existsSync(DATA_FILE)) {
@@ -56,12 +90,21 @@ app.get('/api/tasks', (req, res) => {
 });
 
 // Create a new task
-app.post('/api/tasks', (req, res) => {
+app.post('/api/tasks', upload.single('image'), (req, res) => {
     try {
         const data = readData();
         const newTask = {
             id: Date.now(),
-            ...req.body,
+            type: req.body.type,
+            aisle: req.body.aisle,
+            section: req.body.section,
+            startSection: req.body.startSection || null,
+            endSection: req.body.endSection || null,
+            itemName: req.body.itemName,
+            description: req.body.description,
+            reporterName: req.body.reporterName,
+            just4u: req.body.just4u === 'true',
+            imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
             createdAt: new Date().toISOString(),
             status: 'active'
         };
@@ -79,13 +122,21 @@ app.delete('/api/tasks/:id', (req, res) => {
     try {
         const taskId = parseInt(req.params.id);
         const data = readData();
-        const initialLength = data.tasks.length;
-        data.tasks = data.tasks.filter(task => task.id !== taskId);
+        const taskToDelete = data.tasks.find(task => task.id === taskId);
         
-        if (data.tasks.length === initialLength) {
+        if (!taskToDelete) {
             return res.status(404).json({ error: 'Task not found' });
         }
         
+        // Delete associated image file if it exists
+        if (taskToDelete.imageUrl) {
+            const imagePath = path.join(__dirname, taskToDelete.imageUrl);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+        }
+        
+        data.tasks = data.tasks.filter(task => task.id !== taskId);
         writeData(data);
         res.json({ success: true });
     } catch (error) {
